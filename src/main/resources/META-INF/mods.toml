@@ -1,0 +1,31 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mixins]]
+config="zombie_warhorses.mixins.json"
+
+[[mods]]
+modId="zombie_warhorses"
+version="1.0"
+displayName="Zombie Warhorses"
+authors="erutobusiness"
+description='''
+テイム馬は近くの敵対Mobと戦い、ゾンビ系に殺されると全プレイヤーへ敵対するゾンビ馬に変化する。
+金ニンジンでバニラ馬式に手懐ければ温厚な騎乗マウントになる（治療＝元馬復元はなし）。
+horse_stats datapack と併用すると、手懐けたゾンビ馬が俊足の特別マウントになる。
+'''
+
+[[dependencies.zombie_warhorses]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.zombie_warhorses]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.20.2)"
+    ordering="NONE"
+    side="BOTH"

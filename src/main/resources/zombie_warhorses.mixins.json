@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.erutobusiness.zombiewarhorses.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "zombie_warhorses.refmap.json",
+  "mixins": [
+    "AbstractHorseMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
