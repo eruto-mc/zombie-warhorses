@@ -58,10 +58,6 @@ mixin {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.20.1-47.3.0'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    // PFMStoneVariantMixin のターゲット解決用（実行時は同梱せず・コンパイル/mixin検証のみ）
-    compileOnly files('libs/pfm.jar')
-    // RoadArchitectNoBlockingScanMixin のターゲット解決用（実行時は同梱せず・コンパイル/mixin検証のみ）
-    compileOnly files('libs/roadarchitect.jar')
 }
 
 jar {
