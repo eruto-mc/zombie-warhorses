@@ -17,9 +17,6 @@ public final class Net {
     public static void init() {
         CH.registerMessage(0, ArmorSyncPacket.class,
                 ArmorSyncPacket::encode, ArmorSyncPacket::decode, ArmorSyncPacket::handle);
-        // client→server: Carry On 併用時でも Shift で馬から降りるための降車要求
-        CH.registerMessage(1, DismountPacket.class,
-                DismountPacket::encode, DismountPacket::decode, DismountPacket::handle);
     }
 
     /** そのエンティティを追跡中の全クライアントへ送る（装着/取り外し時）。 */
