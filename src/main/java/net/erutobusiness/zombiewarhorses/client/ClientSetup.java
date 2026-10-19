@@ -21,6 +21,7 @@ public class ClientSetup {
     @SubscribeEvent
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static void onAddLayers(EntityRenderersEvent.AddLayers event) {
+        if (ZombieWarhorses.vanillaBackportHandlesArmor()) return; // VB 1.2 以降は VB が鎧を描く（足すと二重になる）
         EntityRenderer<?> renderer = event.getRenderer(EntityType.ZOMBIE_HORSE);
         if (renderer instanceof LivingEntityRenderer lr) {
             HorseModel armorModel = new HorseModel(event.getEntityModels().bakeLayer(ModelLayers.HORSE_ARMOR));

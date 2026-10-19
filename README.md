@@ -38,12 +38,21 @@ rare (they only come from conversions), so the cost went from *O(zombies)* to ef
 
 ## Armour
 
-Zombie horses have no armour slot in vanilla. On conversion, the saddle and horse armour are
-stashed into the entity's NBT. The saddle is re-fitted when you tame it; **the armour stays in NBT
-and is applied as an attribute modifier, with a client-side render layer so you can still see it**.
+Zombie horses have no armour slot in vanilla. This mod opens the horse inventory's armour slot on
+them. On conversion the saddle is stashed into the entity's NBT and re-fitted when you tame it.
 
-Server-side `persistentData` is not synced to clients, so a small packet carries the worn armour to
-the client cache purely for rendering.
+**With [Vanilla Backport](https://modrinth.com/mod/vanillabackport) 1.2 or later**, zombie horses
+get a real armour slot from that mod (saved as `ArmorItem`, worn in the chest equipment slot, with
+its own armour attribute and render layer). The converted horse's armour goes straight into that
+slot, and this mod's own armour handling below switches off, so armour is neither counted nor drawn
+twice. Note that Vanilla Backport's zombie horses burn in daylight unless they wear armour.
+
+**Without it**, the armour stays in NBT and is applied as an attribute modifier, with a client-side
+render layer so you can still see it. Server-side `persistentData` is not synced to clients, so a
+small packet carries the worn armour to the client cache purely for rendering.
+
+Converted horses are marked persistent, so a lost horse stays in the world as a mount for the horde
+(Vanilla Backport 1.2 lets zombie horses despawn when nobody is near).
 
 ## Optional
 

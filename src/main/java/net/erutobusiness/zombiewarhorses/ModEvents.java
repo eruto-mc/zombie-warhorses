@@ -39,8 +39,10 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
  *          ─(ゾンビ系にkill)→ 敵対ゾンビ馬（全員に敵対／ゾンビが騎乗しに来る）
  *   敵対ゾンビ馬 ─(金ニンジンでバニラ馬式テイム)→ 温厚な騎乗マウント
  *
- * 装備: 変化時に鞍・馬鎧をNBT退避。鞍はテイム時に再装着、馬鎧はNBT保持のまま
- *   防御力を属性で付与＋描画レイヤー(client)で表示（ゾンビ馬に鎧スロットが無いための代替）。
+ * 装備: 変化時に鞍をNBT退避し、テイム時に再装着。
+ *   馬鎧は、Vanilla Backport 1.2 以降があればその鎧枠へ入れる（保存・防御・描画は VB）。
+ *   無ければNBT保持のまま防御力を属性で付与＋描画レイヤー(client)で表示（ゾンビ馬に鎧スロットが無いための代替）。
+ * 変化した馬には消えない印を付ける（VB 1.2 のゾンビ馬は離れると消えるため）。
  */
 public class ModEvents {
 
@@ -64,12 +66,25 @@ public class ModEvents {
                 zh.goalSelector.addGoal(4, new FixedMeleeGoal(zh, 1.4D, ZH_ATTACK));
                 zh.targetSelector.addGoal(2, new HostileWhenWildGoal(zh));
             }
-            // 保持していた鎧を鎧スロット(401)へ復元（GUI/描画/防御へ反映。set→containerChanged→同期）
             CompoundTag pd = zh.getPersistentData();
-            if (pd.contains(NBT_ARMOR)) {
-                zh.getSlot(401).set(ItemStack.of(pd.getCompound(NBT_ARMOR)));
+            if (ZombieWarhorses.vanillaBackportHandlesArmor()) {
+                // VB 1.2 以降: 鎧は VB が保存・反映する。本MODが前に退避した鎧があれば VB の枠へ移して、
+                // 本MODの退避と防御の属性は消す（残すと防御が二重になる）
+                if (pd.contains(NBT_ARMOR)) {
+                    if (zh.getSlot(401).get().isEmpty()) {
+                        zh.getSlot(401).set(ItemStack.of(pd.getCompound(NBT_ARMOR)));
+                    }
+                    pd.remove(NBT_ARMOR);
+                }
+                AttributeInstance inst = zh.getAttribute(Attributes.ARMOR);
+                if (inst != null) inst.removeModifier(ARMOR_MOD_ID);
+            } else {
+                // 保持していた鎧を鎧スロット(401)へ復元（GUI/描画/防御へ反映。set→containerChanged→同期）
+                if (pd.contains(NBT_ARMOR)) {
+                    zh.getSlot(401).set(ItemStack.of(pd.getCompound(NBT_ARMOR)));
+                }
+                refreshArmorAttribute(zh);
             }
-            refreshArmorAttribute(zh);
         } else if (ent.getClass() == Horse.class) {
             Horse h = (Horse) ent;
             if (hasZwhGoal(h)) return;
@@ -111,13 +126,22 @@ public class ModEvents {
         if (zh == null) return;
         zh.moveTo(horse.getX(), horse.getY(), horse.getZ(), horse.getYRot(), horse.getXRot());
 
-        // 鞍・馬鎧を NBT に退避（鞍=テイム時に再装着、馬鎧=属性/描画で反映）
+        // 鞍は NBT に退避（テイム時に再装着）
         ItemStack saddle = horse.getSlot(400).get();
         if (!saddle.isEmpty()) zh.getPersistentData().put(NBT_SADDLE, saddle.save(new CompoundTag()));
         ItemStack armor = horse.getSlot(401).get();
-        if (!armor.isEmpty()) zh.getPersistentData().put(NBT_ARMOR, armor.save(new CompoundTag()));
+        if (!armor.isEmpty()) {
+            if (ZombieWarhorses.vanillaBackportHandlesArmor()) {
+                // VB 1.2 以降: VB の鎧枠へ直接入れる（胸の装備になるので、鎧を着た馬は昼に燃えない）
+                zh.getSlot(401).set(armor.copy());
+            } else {
+                zh.getPersistentData().put(NBT_ARMOR, armor.save(new CompoundTag()));
+            }
+        }
+        // 失った馬は「群れの乗り物」として残す。VB 1.2 のゾンビ馬は離れると消える作りなので、消えない印を付ける
+        zh.setPersistenceRequired();
 
-        level.addFreshEntity(zh); // onJoin が敵対AI＋鎧属性を付与
+        level.addFreshEntity(zh); // onJoin が敵対AI（と、VB が無いときは鎧の属性）を付与
         level.playSound(null, zh.getX(), zh.getY(), zh.getZ(),
                 SoundEvents.ZOMBIE_INFECT, SoundSource.HOSTILE, 1.0F, 1.0F);
     }
@@ -163,6 +187,7 @@ public class ModEvents {
     // --- クライアントが馬を追跡開始したら、その馬の鎧を本人に同期（変化直後/再ログイン対応） ---
     @SubscribeEvent
     public void onStartTracking(PlayerEvent.StartTracking event) {
+        if (ZombieWarhorses.vanillaBackportHandlesArmor()) return; // 描画は VB が受け持つ
         if (!(event.getTarget() instanceof ZombieHorse zh)) return;
         if (!(event.getEntity() instanceof ServerPlayer sp)) return;
         ItemStack armor = getStoredArmor(zh);
@@ -177,6 +202,7 @@ public class ModEvents {
      */
     public static void onZombieHorseArmorChanged(ZombieHorse zh) {
         if (zh.level().isClientSide()) return;
+        if (ZombieWarhorses.vanillaBackportHandlesArmor()) return; // 保存・同期・防御は VB が受け持つ
         ItemStack armor = zh.getSlot(401).get();
         if (armor.isEmpty()) {
             zh.getPersistentData().remove(NBT_ARMOR);

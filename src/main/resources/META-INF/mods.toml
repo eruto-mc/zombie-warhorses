@@ -7,7 +7,7 @@ config="zombie_warhorses.mixins.json"
 
 [[mods]]
 modId="zombie_warhorses"
-version="1.0"
+version="1.2"
 displayName="Zombie Warhorses"
 authors="erutobusiness"
 description='''
